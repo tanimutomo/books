@@ -9,3 +9,7 @@ yayuyo
 rarirurero
 wawon
 
+abcdefg
+hijklmn
+opqrstu
+vwxyz
