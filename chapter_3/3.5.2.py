@@ -2,15 +2,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # answer
-x = np.linspace(0,7)
-y = np.sin(x)
+def answer(s, e):
+    x = np.linspace(s,e)
+    y = np.sin(x)
+    return x, y
 
 # variable
-M = 4
-N = 10
-lam = 10.0
-m = np.zeros(M)
-l_lam = np.eye(M,M)
+def variable():
+    M = 4
+    N = 10
+    lam = 10.0
+    m = np.zeros(M)
+    l_lam = np.eye(M,M)
+    return M, N, lam, m, l_lam
 
 def x_to_vec_x(x, d=M):
     ones = np.ones(x.shape)
@@ -21,14 +25,18 @@ def x_to_vec_x(x, d=M):
     return x_vec
 
 # train_data
-train_x = np.random.uniform(0, 7, N)
-train_y = np.sin(train_x)
-train_x_vec = x_to_vec_x(train_x)
+def train_data(N=N):
+    train_x = np.random.uniform(0, 7, N)
+    train_y = np.sin(train_x)
+    train_x_vec = x_to_vec_x(train_x)
+    return train_x, train_y, train_x_vec
 
 # calcurate
-D = 50
-input_x = np.linspace(0,7,D)
-input_x_vec = x_to_vec_x(input_x)
+def input_var(D=50):
+    D = D
+    input_x = np.linspace(0,7,D)
+    input_x_vec = x_to_vec_x(input_x)
+    return input_x, input_x_vec
 
 def linear_regression():
     ynxn = 0
@@ -65,4 +73,7 @@ def plotting():
     plt.ylim([-3, 3])
     plt.show()
 
-plotting()
+ans_x, ans_y = answer()
+M, N, lam, m, l_lam = variable()
+
+
