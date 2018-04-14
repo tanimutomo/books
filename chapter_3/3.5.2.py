@@ -16,7 +16,7 @@ def variable():
     l_lam = np.eye(M,M)
     return M, N, lam, m, l_lam
 
-def x_to_vec_x(x, d=M):
+def x_to_vec_x(x):
     ones = np.ones(x.shape)
     x_vec = np.array([ones, x])
     for i in range(2, M):
@@ -25,7 +25,7 @@ def x_to_vec_x(x, d=M):
     return x_vec
 
 # train_data
-def train_data(N=N):
+def train_data():
     train_x = np.random.uniform(0, 7, N)
     train_y = np.sin(train_x)
     train_x_vec = x_to_vec_x(train_x)
@@ -64,7 +64,7 @@ def linear_regression():
 
 def plotting():
     plt.plot(train_x, train_y, "o")
-    plt.plot(x, y, color='r')
+    plt.plot(ans_x, ans_y, color='r')
     output = linear_regression()
     plt.plot(input_x, output[0], color='b')
     plt.plot(input_x, output[1], linestyle='--', color='c')
@@ -73,7 +73,10 @@ def plotting():
     plt.ylim([-3, 3])
     plt.show()
 
-ans_x, ans_y = answer()
+ans_x, ans_y = answer(0, 7)
 M, N, lam, m, l_lam = variable()
-
+train_x, train_y, train_x_vec = train_data()
+input_x, input_x_vec = input_var()
+output = linear_regression()
+plotting()
 
