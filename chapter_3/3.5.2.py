@@ -2,77 +2,89 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
-# answer
-def get_answer(s, e):
-    x = np.linspace(s,e)
-    y = np.sin(x)
-    return x, y
+def create_dataset(x, M):
+    x_vec = np.concatenate([
+        np.power(x, i) for i in range(M)],
+        axis=0)
+    return x_vec
 
-# variable
-def variable(M):
-    D = 50
-    m = np.zeros(M)
-    l_lam = np.eye(M,M)
-    return D, m, l_lam
-
-def x_to_vec_x(x, D):
-    ones = np.ones(x.shape)
-    if args.M != 1:
-        x_vec = np.array([ones, x])
-        for i in range(2, args.M):
-            tmp = x ** i
-            x_vec = np.append(x_vec, np.array([tmp]), axis=0)
-    else:
-        x_vec = np.ones((1,D))
-    return x_vec 
-
-# train_data
-def train_data(D):
-    train_x = np.random.uniform(0, 7, args.N)
-    train_y = np.sin(train_x)
-    train_x_vec = x_to_vec_x(train_x, D)
-    return train_x, train_y, train_x_vec
-
-# calcurate
-def input_var(D):
-    input_x = np.linspace(0,7,D)
-    input_x_vec = x_to_vec_x(input_x, D)
-    return input_x, input_x_vec
-
-def linear_regression():
-    ynxn = 0
-    xnxn = 0
-    for i in range(args.N):
-        tmp1 = train_y[i] * train_x_vec[:,i]
-        tmp2 = np.dot(train_x_vec[:,i].reshape(args.M,1), train_x_vec[:,i].reshape(1,args.M))
-        ynxn += tmp1
-        xnxn += tmp2
-
-    post_l_lam = args.s_lam * xnxn + l_lam
-    inv_post_l_lam = np.linalg.inv(post_l_lam)
-    tmp_post_m = args.s_lam * ynxn + np.dot(l_lam, m)
-    post_m = np.dot(inv_post_l_lam, tmp_post_m)
-
-    new_lam_mat = 1/args.s_lam + np.dot(np.dot(input_x_vec.T, inv_post_l_lam), input_x_vec)
-    new_lam = np.diag(new_lam_mat)
-
-    output_y_u = np.dot(post_m, input_x_vec)
-    output_y_u_plam = output_y_u + np.sqrt(new_lam)
-    output_y_u_mlam = output_y_u - np.sqrt(new_lam)
-
-    return output_y_u, output_y_u_plam, output_y_u_mlam
-
-
-def plotting():
-    plt.plot(train_x, train_y, "o")
-    plt.plot(ans_x, ans_y, color='r')
-    output = linear_regression()
-    plt.plot(input_x, output[0], color='b')
-    plt.plot(input_x, output[1], linestyle='--', color='c')
-    plt.plot(input_x, output[2], linestyle='--', color='c')
+def plotting(ground_truth, training_data, prediction):
+    plt.plot(training_data[0],training_data[1], "o")
+    plt.plot(ground_truth[0], ground_truth[1], color='r')
+    plt.plot(ground_truth[0], prediction[0], color='b')
+    plt.plot(ground_truth[0], prediction[1], linestyle='--', color='c')
+    plt.plot(ground_truth[0], prediction[2], linestyle='--', color='c')
     plt.xlim([-0.5, 7])
     plt.ylim([-3, 3])
     plt.show()
+
+class BaysianLinearRegression(object):
+    def __init__(self, M, s_lam):
+        self.M = M
+        self.s_lam = s_lam
+        self.prior_m = np.zeros(M)
+        self.prior_l_lam = np.eye(M,M)
+
+    def calcurate_posterior(self, tx, ty):
+        ynxn = 0
+        xnxn = 0
+        print(ty.shape)
+        for x, y in zip(tx, ty):
+            x = x.reshape(-1, 1)
+            ynxn += y * x
+            xnxn += np.dot(x, x.T)
+
+        post_l_lam = self.s_lam * xnxn + self.prior_l_lam
+        inv_post_l_lam = np.linalg.inv(post_l_lam)
+        post_m = self.s_lam * ynxn + np.dot(self.prior_l_lam, self.prior_m)
+        post_m = np.dot(inv_post_l_lam, post_m.T)
+
+        self.prior_m = post_m
+        self.prior_l_lam = post_l_lam
+        
+        return post_m, post_l_lam
+    
+    def calcurate_predictive(self, xs, post_m=None, post_l_lam=None):
+        if post_m is None and post_l_lam is None:
+            post_m = self.prior_m
+            post_l_lam = self.prior_l_lam
+
+        inv_post_l_lam = np.linalg.inv(post_l_lam)
+
+        post_s_lam = 1 / self.s_lam + np.dot(np.dot(xs.T, inv_post_l_lam), xs)
+        post_s_lam = np.diag(post_s_lam)
+
+        output_y_u = np.dot(post_m.T, xs)
+        output_y_u_plam = output_y_u + np.sqrt(post_s_lam)
+        output_y_u_mlam = output_y_u - np.sqrt(post_s_lam)
+
+        return output_y_u, output_y_u_plam, output_y_u_mlam
+
+def main(args):
+    M = args.M
+    N = args.N
+    s_lam = args.s_lam
+
+    # answer
+    function = np.sin
+    input_x = np.linspace(args.start_data, args.end_data)
+    y = function(input_x)
+    ground_truth = (input_x, y)
+
+    # input_vector_data
+    input_x_vec = create_dataset(input_x.reshape(1, -1), M)
+
+    # train_data
+    train_x = np.random.uniform(0, 7, N)
+    train_y = function(train_x)
+    train_x_vec = create_dataset(train_x, M)
+    training_data = (train_x, train_y)
+
+    model = BaysianLinearRegression(args.M, args.s_lam)
+    post_m, post_l_lam = model.calcurate_posterior(train_x_vec, train_y)
+    prediction = model.calcurate_predictive(input_x_vec)
+
+    plotting(ground_truth, training_data, prediction)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='linear regression')
@@ -88,10 +100,4 @@ if __name__ == '__main__':
                         help='end point of graph')
     args = parser.parse_args()
 
-    ans_x, ans_y = get_answer(0, 7)
-    D, m, l_lam = variable(args.M)
-    train_x, train_y, train_x_vec = train_data(D)
-    input_x, input_x_vec = input_var(D)
-    output = linear_regression()
-    plotting()
-
+    main(args)
