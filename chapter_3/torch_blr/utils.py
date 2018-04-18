@@ -12,11 +12,11 @@ def create_dataset(N, function=torch.sin):
     return [train_x, train_y], [gt_x, gt_y]
 
 def plotting(ground_truth, train_data, prediction):
-    plt.plot(list(train_data[0]), list(train_data[1]), "o")
-    plt.plot(list(ground_truth[0]), list(ground_truth[1]), color='r')
-    plt.plot(list(ground_truth[0]), list(prediction[0]), color='b')
-    plt.plot(list(ground_truth[0]), list(prediction[1]), linestyle='--', color='c')
-    plt.plot(list(ground_truth[0]), list(prediction[2]), linestyle='--', color='c')
+    plt.plot(train_data[0].numpy(), train_data[1].numpy(), "o")
+    plt.plot(ground_truth[0].numpy(), ground_truth[1].numpy(), color='r')
+    plt.plot(ground_truth[0].numpy(), prediction[0].numpy(), color='b')
+    plt.plot(ground_truth[0].numpy(), prediction[1].numpy(), linestyle='--', color='c')
+    plt.plot(ground_truth[0].numpy(), prediction[2].numpy(), linestyle='--', color='c')
     
     plt.xlim([-0.5, 7])
     plt.ylim([-3, 3])
