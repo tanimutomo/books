@@ -2,28 +2,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 
-def create_dataset(N, function=np.sin):
-    # train_data
-    train_x = np.random.uniform(0, 7, N)
-    train_y = function(train_x)
-    # ground_truth
-    gt_x = np.linspace(0, 7)
-    gt_y = function(gt_x)
+def create_dataset(x, M):
+    x_vec = np.concatenate([
+        np.power(x.reshape(-1, 1), i) for i in range(M)],
+        axis=0).reshape(4, -1)
+    return x_vec
 
-    return [train_x, train_y], [gt_x, gt_y]
-
-def plotting(ground_truth, train_data, prediction):
-    plt.plot(train_data[0],train_data[1], "o")
+def plotting(ground_truth, training_data, prediction):
+    plt.plot(training_data[0],training_data[1], "o")
     plt.plot(ground_truth[0], ground_truth[1], color='r')
     plt.plot(ground_truth[0], prediction[0], color='b')
     plt.plot(ground_truth[0], prediction[1], linestyle='--', color='c')
     plt.plot(ground_truth[0], prediction[2], linestyle='--', color='c')
-    
     plt.xlim([-0.5, 7])
     plt.ylim([-3, 3])
-
     plt.show()
-
 
 class BaysianLinearRegression(object):
     def __init__(self, M, s_lam):
@@ -31,20 +24,14 @@ class BaysianLinearRegression(object):
         self.s_lam = s_lam
         self.prior_m = np.zeros(M)
         self.prior_l_lam = np.eye(M,M)
-    
-    def mapping(self, x):
-        x = x.reshape(1, -1)
-        x_vec = np.concatenate([
-            np.power(x, i) for i in range(self.M)],
-            axis=0)
-        return x_vec
 
     def calcurate_posterior(self, tx, ty):
-        tx = tx.T
+        tx = tx.reshape(-1, 1)
         ynxn = 0
         xnxn = 0
         for x, y in zip(tx, ty):
-            x = x.reshape(1, -1)
+            # print('x:' + str(x.shape))
+            # print('y:' + str(y.shape))
             ynxn += y * x
             xnxn += np.dot(x.T, x)
         post_l_lam = self.s_lam * xnxn + self.prior_l_lam
@@ -78,15 +65,27 @@ def main(args):
     N = args.N
     s_lam = args.s_lam
 
-    train_data, ground_truth = create_dataset(N)
+    # answer
+    function = np.sin
+    input_x = np.linspace(args.start_data, args.end_data)
+    y = function(input_x)
+    ground_truth = (input_x, y)
+
+    # input_vector_data
+    input_x_vec = create_dataset(input_x.reshape(-1, 1), M)
+
+    # train_data
+    train_x = np.random.uniform(0, 7, N)
+    train_y = function(train_x)
+    train_x_vec = create_dataset(train_x, M)
+    print(train_x_vec)
+    training_data = (train_x, train_y)
 
     model = BaysianLinearRegression(args.M, args.s_lam)
-    train_x_vec = model.mapping(train_data[0])
-    gt_x_vec = model.mapping(ground_truth[0])
-    post_m, post_l_lam = model.calcurate_posterior(train_x_vec, train_data[1])
-    prediction = model.calcurate_predictive(gt_x_vec)
+    post_m, post_l_lam = model.calcurate_posterior(train_x_vec, train_y)
+    prediction = model.calcurate_predictive(input_x_vec)
 
-    plotting(ground_truth, train_data, prediction)
+    # plotting(ground_truth, training_data, prediction)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='linear regression')
@@ -96,6 +95,10 @@ if __name__ == '__main__':
                         help='number of train data')
     parser.add_argument('--s_lam', type=float, default=10.0,
                         help='accracy parameter')
+    parser.add_argument('--start_data', type=int, default=0,
+                        help='start point of graph')
+    parser.add_argument('--end_data', type=int, default=7,
+                        help='end point of graph')
     args = parser.parse_args()
 
     main(args)
